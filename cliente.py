@@ -3,6 +3,7 @@ import sys
 import pacote
 import random
 import time
+import math
 
 class Cliente():
 
@@ -16,6 +17,7 @@ class Cliente():
         self.dados = open('lista_cliente.txt', 'w', encoding="utf8")
         self.lista_tempo = []
         self.RTT = 0
+        self.media = 0
 
         self.inicio = 0
         self.fim = 0
@@ -24,7 +26,9 @@ class Cliente():
         try:
             msg = self.s.recvfrom(1024)
             msg_rtt = self.s.recvfrom(1024)
+            msg_media = self.s.recvfrom(1024)
             self.RTT = float(msg_rtt[0].decode('ascii'))
+            self.media = float(msg_media[0].decode('ascii'))
             self.inicio = time.time()
             nome_arquivo = str(msg[0].decode('ascii')).split('/')
             nome_arquivo = nome_arquivo[len(nome_arquivo) - 1]
@@ -61,7 +65,7 @@ class Cliente():
         self.s.close()
 
     def calcular_atraso(self, segmento):
-        X = random.expovariate(10)
+        X = -(self.media) * math.log(random.random(), math.e)
         atraso = (self.RTT / 2) + X
         tn = self.tempo_atual + atraso
         elemento = (tn, segmento)

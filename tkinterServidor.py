@@ -3,7 +3,6 @@ from tkinter import ttk
 from tkinter.filedialog import askopenfilename
 import tkinter.messagebox as mensagem
 from functools import partial
-
 import matplotlib.animation as animation
 from tkinterGrafico import Grafico
 from servidor import Servidor
@@ -22,7 +21,6 @@ class TkServidor(object):
         arquivo = Menu(menu)
         arquivo.add_command(label = 'Mostrar Gráfico', command = self.abrir_grafico, font = self.font)
         arquivo.add_command(label = 'Exit', command = lambda: exit(), font = self.font)
-
         menu.add_cascade(label = 'Arquivo', menu = arquivo)
 
         ''' Frame de Configurações '''
@@ -31,23 +29,28 @@ class TkServidor(object):
 
         self.texto_janela = ttk.Label(self.frame2, text = 'Janela', font = self.font)
         self.texto_janela.pack()
-        self.janela = Spinbox(self.frame2, from_ = 1, to = 10, font = self.font)
+        self.janela = Spinbox(self.frame2, from_ = 1, to = 100, font = self.font)
         self.janela.pack(pady = 10, padx = 30)
 
-        self.texto_tempo_espera = ttk.Label(self.frame2, text = 'Tempo de Espera (p)', font = self.font)
-        self.texto_tempo_espera.pack()
-        self.tempo_espera = Spinbox(self.frame2, from_ = 0, to = 5, increment = 0.05, font = self.font)
-        self.tempo_espera.pack(pady = 10)
+        self.texto_probabilidade = ttk.Label(self.frame2, text = 'Probabilidade (p)', font = self.font)
+        self.texto_probabilidade.pack()
+        self.probabilidade = Spinbox(self.frame2, from_ = 0, to = 100, increment = 0.05, font = self.font)
+        self.probabilidade.pack(pady = 10)
 
         self.texto_tempo_limite = ttk.Label(self.frame2, text = 'Timeout', font = self.font)
         self.texto_tempo_limite.pack()
-        self.tempo_limite = Spinbox(self.frame2, from_ = 0, to = 5, increment = 0.05, font = self.font)
+        self.tempo_limite = Spinbox(self.frame2, from_ = 0, to = 100, increment = 0.05, font = self.font)
         self.tempo_limite.pack(pady = 10)
 
         self.texto_rtt = ttk.Label(self.frame2, text = 'RTT', font = self.font)
         self.texto_rtt.pack()
-        self.rtt = Spinbox(self.frame2, from_ = 0, to = 5, increment = 0.05, font = self.font)
+        self.rtt = Spinbox(self.frame2, from_ = 0, to = 100, increment = 0.05, font = self.font)
         self.rtt.pack(pady = 10)
+
+        self.texto_media = ttk.Label(self.frame2, text = 'Média E[X]', font = self.font)
+        self.texto_media.pack()
+        self.media = Spinbox(self.frame2, from_ = 0, to = 100, increment = 0.05, font = self.font)
+        self.media.pack(pady = 10)
 
         self.lb_arquivo = ttk.Label(self.frame2)
         self.lb_arquivo.pack()
@@ -97,7 +100,7 @@ class TkServidor(object):
             lb_arquivo['text'] = "Erro ao abrir arquivo"
 
     def obter_dados(self):
-        servidor = Servidor(self.lb_arquivo['text'], int(self.janela.get()), float(self.tempo_espera.get()), float(self.tempo_limite.get()), float(self.rtt.get()))
+        servidor = Servidor(self.lb_arquivo['text'], int(self.janela.get()), float(self.probabilidade.get()), float(self.tempo_limite.get()), float(self.rtt.get()), float(self.media.get()))
         servidor.enviar()
 
         for linha in open('lista_servidor.txt', 'r'):

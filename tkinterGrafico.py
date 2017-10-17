@@ -39,7 +39,7 @@ class Grafico(Tk):
 
         self.a.clear()
         self.a.plot(xList, yList, color='black')
-        self.a.set_title("Tempo Percorrido vs. Pacote", fontsize="12")
+        self.a.set_title("Tempo de Transferência vs. Pacote", fontsize="12")
         self.a.set_xlabel('Pacote')
         self.a.set_ylabel('Tempo de Transferência (segundos)')
 

@@ -6,18 +6,21 @@ import pacote
 from tempo import Tempo
 import os
 import random
+import math
 
 class Servidor():
 
-    def __init__(self, nome_arquivo, tamanho_janela, tempo_espera, tempo_limite, rtt):
+    def __init__(self, nome_arquivo, tamanho_janela, probabilidade, tempo_limite, rtt, media):
 
         self.HOST = '127.0.0.1'
         self.PORTA = 8291
         self.TAM_PACOTE = 300
+        self.TEMPO_ESPERA = 0.05
         self.TAM_JANELA = tamanho_janela
-        self.TEMPO_ESPERA = tempo_espera
         self.TEMPO_LIMITE = tempo_limite
         self.RTT = rtt
+        self.media = media
+        self.probabilidade = probabilidade
         self.lista_tempo = []
         self.nome_arquivo = nome_arquivo
 
@@ -36,27 +39,13 @@ class Servidor():
         self.fim = 0
         self.tempo_atual = 0
 
-    def resposta(self, s):
-
-        while True:
-            pct, _ = s.recvfrom(1024)
-            ack, _ = pacote.extrair(pct)
-
-            self.dados.write('ACK recebido ' + str(ack) + '\n')
-            self.calcular_atraso(ack)
-            if ack >= self.base:
-                self.mutex.acquire()
-                self.base = int(ack) + 1
-                self.dados.write('Base atualizada ' + str(self.base) + '\n')
-                self.tempo_remetente.stop()
-                self.mutex.release()
-
     def enviar(self):
         self.inicio = time.time()
         try:
             self.arquivo = open(self.nome_arquivo, 'rb')
             self.s.sendto(self.nome_arquivo.encode('ascii'), (self.HOST, self.PORTA))
             self.s.sendto(str(self.RTT).encode('ascii'), (self.HOST, self.PORTA))
+            self.s.sendto(str(self.media).encode('ascii'), (self.HOST, self.PORTA))
         except IOError:
             self.dados.write('Arquivo não encontrado  ' + self.nome_arquivo + '\n')
             sys.exit()
@@ -83,11 +72,12 @@ class Servidor():
 
             # Envia todos os pacotes pela janela
             while prox_enviar < self.base + tam_janela:
-                self.s.sendto(pacotes[prox_enviar], (self.HOST, self.PORTA))
-                self.fim = time.time()
-                self.dados.write('Enviando pacote ' + str(prox_enviar) + '\n')
-                self.tempo_atual = self.fim - self.inicio
-                self.grafico.write(str(prox_enviar) + ',' + '%f \n' %(self.tempo_atual))
+                if not self.probabilidade_perda():
+                    self.s.sendto(pacotes[prox_enviar], (self.HOST, self.PORTA))
+                    self.dados.write('Enviando pacote ' + str(prox_enviar) + '\n')
+                    self.fim = time.time()
+                    self.tempo_atual = self.fim - self.inicio
+                    self.grafico.write(str(prox_enviar) + ',' + '%f \n' %(self.tempo_atual))
                 prox_enviar += 1
 
             if not self.tempo_remetente.running():
@@ -116,8 +106,23 @@ class Servidor():
         self.grafico.close()
         self.s.close()
 
+    def resposta(self, s):
+
+        while True:
+            pct, _ = s.recvfrom(1024)
+            ack, _ = pacote.extrair(pct)
+
+            self.dados.write('ACK recebido ' + str(ack) + '\n')
+            self.calcular_atraso(ack)
+            if ack >= self.base:
+                self.mutex.acquire()
+                self.base = int(ack) + 1
+                self.dados.write('Base atualizada ' + str(self.base) + '\n')
+                self.tempo_remetente.stop()
+                self.mutex.release()
+
     def calcular_atraso(self, segmento):
-        X = random.expovariate(10)
+        X = -(self.media) * math.log(random.random(), math.e)
         atraso = (self.RTT / 2) + X
         tn = self.tempo_atual + atraso
         elemento = (tn, segmento)
@@ -130,3 +135,9 @@ class Servidor():
                 self.lista_tempo.append((tn, segmento))
         else:
             self.lista_tempo.append((tn, segmento))
+
+    def probabilidade_perda(self):
+        valor = random.random()
+        if valor <= self.probabilidade:
+            return True
+        return False
