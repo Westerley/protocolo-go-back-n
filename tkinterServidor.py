@@ -84,9 +84,9 @@ class TkServidor(object):
         self.instrucoes.pack(expand = 1)
 
     def abrir_grafico(self):
-        app = Grafico()
-        an = animation.FuncAnimation(app.f, app.animate, interval = 1000)
-        app.mainloop()
+        grafico = Grafico()
+        an = animation.FuncAnimation(grafico.f, grafico.popula_dados, interval = 1000)
+        grafico.mainloop()
 
     def abrir_arquivo(self, lb_arquivo):
         try:

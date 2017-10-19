@@ -1,3 +1,8 @@
+"""
+Arquivo responsavel por gerar o gráfico dos resultados
+Deve-se adicionar o arquivo.txt gerado ao transferir o arquivo
+"""
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np

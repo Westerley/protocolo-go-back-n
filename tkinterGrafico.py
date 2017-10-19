@@ -26,19 +26,19 @@ class Grafico(Tk):
         toolbar.update()
         canvas._tkcanvas.pack(side = TOP, fill = BOTH, expand=True)
 
-    def animate(self, i):
-        pullData = open("grafico.txt", "r").read()
-        dataList = pullData.split('\n')
-        xList = []
-        yList = []
-        for eachLine in dataList:
-            if len(eachLine) > 1:
-                x, y = eachLine.split(',')
-                xList.append(int(x))
-                yList.append(float(y))
+    def popula_dados(self, i):
+        arquivo = open("grafico.txt", "r").read()
+        lista = arquivo.split('\n')
+        xLista = []
+        yLista = []
+        for linha in lista:
+            if len(linha) > 1:
+                x, y = linha.split(',')
+                xLista.append(int(x))
+                yLista.append(float(y))
 
         self.a.clear()
-        self.a.plot(xList, yList, color='black')
+        self.a.plot(xLista, yLista, color='black')
         self.a.set_title("Tempo de Transferência vs. Pacote", fontsize="12")
         self.a.set_xlabel('Pacote')
         self.a.set_ylabel('Tempo de Transferência (segundos)')

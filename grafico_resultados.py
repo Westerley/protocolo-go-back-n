@@ -1,6 +1,9 @@
+"""
+Arquivo responsavel por gerar o gráfico dos resultados
+As listas recebem a quantidade final de pacotes e o tempo percorrido para transferir o arquivo
+"""
+
 import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 
 pacote = [4619, 4619, 4619, 4619, 4619]
 tempo = [104.794350, 112.279248, 112.039556, 106.722737, 114.455940]

@@ -1,6 +1,5 @@
 import socket
 import sys
-import pacote
 import random
 import time
 import math
@@ -43,7 +42,8 @@ class Cliente():
             pct, endereco = self.s.recvfrom(1024)
             if not pct:
                 break
-            num_sequencia, data = pacote.extrair(pct)
+            num_sequencia = int.from_bytes(pct[0:4], byteorder = 'little', signed = True)
+            data = pct[4:]
             self.dados.write('Pacote recebido ' + str(num_sequencia) + '\n')
             self.fim = time.time()
             self.tempo_atual = self.fim - self.inicio
@@ -52,13 +52,13 @@ class Cliente():
             if num_sequencia == num_esperado:
                 self.dados.write('Sequencia/Pacote esperado = ' + str(num_sequencia) + '\n')
                 self.dados.write('Enviando ACK ' + str(num_esperado) + '\n')
-                pct = pacote.criar(num_esperado)
+                pct = num_esperado.to_bytes(4, byteorder = 'little', signed = True)
                 self.s.sendto(pct, endereco)
                 num_esperado += 1
                 arquivo.write(data)
             else:
                 self.dados.write('Enviando ACK ' + str(num_esperado - 1) + '\n')
-                pct = pacote.criar(num_esperado - 1)
+                pct = (num_esperado - 1).to_bytes(4, byteorder = 'little', signed = True)
                 self.s.sendto(pct, endereco)
 
         arquivo.close()

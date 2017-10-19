@@ -2,20 +2,19 @@ import socket
 import _thread
 import time
 import sys
-import pacote
-from tempo import Tempo
 import os
 import random
 import math
 
 class Servidor():
 
+    TEMPO_PARADA = -1
+
     def __init__(self, nome_arquivo, tamanho_janela, probabilidade, tempo_limite, rtt, media):
 
         self.HOST = '127.0.0.1'
         self.PORTA = 8291
         self.TAM_PACOTE = 300
-        self.TEMPO_ESPERA = 0.05
         self.TAM_JANELA = tamanho_janela
         self.TEMPO_LIMITE = tempo_limite
         self.RTT = rtt
@@ -23,10 +22,10 @@ class Servidor():
         self.probabilidade = probabilidade
         self.lista_tempo = []
         self.nome_arquivo = nome_arquivo
+        self._start_time = self.TEMPO_PARADA
 
         self.base = 0
-        self.mutex = _thread.allocate_lock()
-        self.tempo_remetente = Tempo(self.TEMPO_LIMITE)
+        self.thread = _thread.allocate_lock()
 
         self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.s.bind(('127.0.0.1', 0))
@@ -56,7 +55,7 @@ class Servidor():
             data = self.arquivo.read(self.TAM_PACOTE)
             if not data:
                 break
-            pacotes.append(pacote.criar(num_sequencia, data))
+            pacotes.append(num_sequencia.to_bytes(4, byteorder = 'little', signed = True) + data)
             num_sequencia += 1
 
         num_pacotes = len(pacotes)
@@ -68,9 +67,8 @@ class Servidor():
         _thread.start_new_thread(self.resposta, (self.s,))
 
         while self.base < num_pacotes:
-            self.mutex.acquire()
+            self.thread.acquire()
 
-            # Envia todos os pacotes pela janela
             while prox_enviar < self.base + tam_janela:
                 if not self.probabilidade_perda():
                     self.s.sendto(pacotes[prox_enviar], (self.HOST, self.PORTA))
@@ -78,26 +76,26 @@ class Servidor():
                     self.fim = time.time()
                     self.tempo_atual = self.fim - self.inicio
                     self.grafico.write(str(prox_enviar) + ',' + '%f \n' %(self.tempo_atual))
-                prox_enviar += 1
+                    prox_enviar += 1
 
-            if not self.tempo_remetente.running():
+            if not self.running():
                 self.dados.write('Iniciando temporizador\n')
-                self.tempo_remetente.start()
+                self.iniciar()
 
-            while self.tempo_remetente.running() and not self.tempo_remetente.timeout():
-                self.mutex.release()
+            while self.running() and not self.timeout():
+                self.thread.release()
                 self.dados.write('Dormindo\n')
-                time.sleep(self.TEMPO_ESPERA)
-                self.mutex.acquire()
+                time.sleep(0.05)
+                self.thread.acquire()
 
-            if self.tempo_remetente.timeout():
+            if self.timeout():
                 self.dados.write('Tempo esgotado\n')
-                self.tempo_remetente.stop()
+                self.parar()
                 prox_enviar = self.base
             else:
                 self.dados.write('Movendo janela\n')
-                tam_janela = min(self.TAM_JANELA, num_pacotes - self.base)  # Ajusta a janela
-            self.mutex.release()
+                tam_janela = min(self.TAM_JANELA, num_pacotes - self.base)
+            self.thread.release()
 
         self.s.sendto(''.encode('ascii'), (self.HOST, self.PORTA))
 
@@ -110,16 +108,16 @@ class Servidor():
 
         while True:
             pct, _ = s.recvfrom(1024)
-            ack, _ = pacote.extrair(pct)
+            ack = int.from_bytes(pct[0:4], byteorder = 'little', signed = True)
 
             self.dados.write('ACK recebido ' + str(ack) + '\n')
             self.calcular_atraso(ack)
             if ack >= self.base:
-                self.mutex.acquire()
+                self.thread.acquire()
                 self.base = int(ack) + 1
                 self.dados.write('Base atualizada ' + str(self.base) + '\n')
-                self.tempo_remetente.stop()
-                self.mutex.release()
+                self.parar()
+                self.thread.release()
 
     def calcular_atraso(self, segmento):
         X = -(self.media) * math.log(random.random(), math.e)
@@ -141,3 +139,20 @@ class Servidor():
         if valor <= self.probabilidade:
             return True
         return False
+
+    def iniciar(self):
+        if self._start_time == self.TEMPO_PARADA:
+            self._start_time = time.time()
+
+    def parar(self):
+        if self._start_time != self.TEMPO_PARADA:
+            self._start_time = self.TEMPO_PARADA
+
+    def running(self):
+        return self._start_time != self.TEMPO_PARADA
+
+    def timeout(self):
+        if not self.running():
+            return False
+        else:
+            return time.time() - self._start_time >= self.TEMPO_LIMITE
