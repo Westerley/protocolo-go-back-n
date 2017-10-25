@@ -11,7 +11,7 @@ recebimento de ack e  mensagens. Também deve-se implementar
 uma função  que escolhe se o pacote será entregue ou não.
 Isto é, um pacote é perdido com probabilidade p.
 
-<img src="imagens/imagem.png" width="100" height="100">
+<img src="imagens/imagem.png" width="850" height="400">
 
 ## Requisitos
 
