@@ -34,7 +34,7 @@ class Cliente():
             nome_arquivo = 'copy_' + nome_arquivo
             arquivo = open(nome_arquivo, 'wb')
         except IOError:
-            print('Não foi possivel salvar o arquivo!')
+            self.dados.write('Arquivo não encontrado\n')
             sys.exit()
 
         num_esperado = 0
@@ -47,17 +47,17 @@ class Cliente():
             self.dados.write('Pacote recebido ' + str(num_sequencia) + '\n')
             self.fim = time.time()
             self.tempo_atual = self.fim - self.inicio
-            self.calcular_atraso(num_sequencia)
 
             if num_sequencia == num_esperado:
-                self.dados.write('Sequencia/Pacote esperado = ' + str(num_sequencia) + '\n')
-                self.dados.write('Enviando ACK ' + str(num_esperado) + '\n')
+                self.dados.write('Pacote recebido é igual ao pacote esperado\n')
+                self.dados.write('Enviando ACK de confirmação ' + str(num_esperado) + '\n')
                 pct = num_esperado.to_bytes(4, byteorder = 'little', signed = True)
+                self.calcular_atraso(num_sequencia)
                 self.s.sendto(pct, endereco)
                 num_esperado += 1
                 arquivo.write(data)
             else:
-                self.dados.write('Enviando ACK ' + str(num_esperado - 1) + '\n')
+                self.dados.write('Enviando ACK esperado ' + str(num_esperado - 1) + '\n')
                 pct = (num_esperado - 1).to_bytes(4, byteorder = 'little', signed = True)
                 self.s.sendto(pct, endereco)
 

@@ -22,7 +22,7 @@ class Servidor():
         self.probabilidade = probabilidade
         self.lista_tempo = []
         self.nome_arquivo = nome_arquivo
-        self._start_time = self.TEMPO_PARADA
+        self.start_time = self.TEMPO_PARADA
 
         self.base = 0
         self.thread = _thread.allocate_lock()
@@ -34,12 +34,12 @@ class Servidor():
         self.dados.write("Tamanho Arquivo: " + str(os.path.getsize(self.nome_arquivo)) + " bytes\n")
         self.grafico = open('grafico.txt', 'w', encoding="utf8")
 
-        self.inicio = 0
-        self.fim = 0
+        self.tempo_inicio = 0
+        self.tempo_fim = 0
         self.tempo_atual = 0
 
     def enviar(self):
-        self.inicio = time.time()
+        self.tempo_inicio = time.time()
         try:
             self.arquivo = open(self.nome_arquivo, 'rb')
             self.s.sendto(self.nome_arquivo.encode('ascii'), (self.HOST, self.PORTA))
@@ -60,7 +60,7 @@ class Servidor():
 
         num_pacotes = len(pacotes)
         self.dados.write('Recebidos ' + str(num_pacotes) + '\n')
-        tam_janela = min(self.TAM_JANELA, num_pacotes - self.base)  # Ajusta a janela
+        tam_janela = min(self.TAM_JANELA, num_pacotes - self.base)
         prox_enviar = 0
         self.base = 0
 
@@ -71,26 +71,30 @@ class Servidor():
 
             while prox_enviar < self.base + tam_janela:
                 if not self.probabilidade_perda():
-                    self.s.sendto(pacotes[prox_enviar], (self.HOST, self.PORTA))
-                    self.dados.write('Enviando pacote ' + str(prox_enviar) + '\n')
-                    self.fim = time.time()
-                    self.tempo_atual = self.fim - self.inicio
-                    self.grafico.write(str(prox_enviar) + ',' + '%f \n' %(self.tempo_atual))
-                    prox_enviar += 1
+                    try:
+                        self.s.sendto(pacotes[prox_enviar], (self.HOST, self.PORTA))
+                        self.dados.write('Enviando pacote ' + str(prox_enviar) + '\n')
+                        self.tempo_fim = time.time()
+                        self.tempo_atual = self.tempo_fim - self.tempo_inicio
+                        self.grafico.write(str(prox_enviar) + ',' + '%f \n' %(self.tempo_atual))
+                    except IOError:
+                        sys.exit()
+                prox_enviar += 1
 
-            if not self.running():
+            if not self.verifica_execucao():
                 self.dados.write('Iniciando temporizador\n')
-                self.iniciar()
+                if self.start_time == self.TEMPO_PARADA:
+                    self.start_time = time.time()
 
-            while self.running() and not self.timeout():
+            while self.verifica_execucao() and not self.verifica_timeout():
                 self.thread.release()
-                self.dados.write('Dormindo\n')
+                self.dados.write('Aguardando ...\n')
                 time.sleep(0.05)
                 self.thread.acquire()
 
-            if self.timeout():
+            if self.verifica_timeout():
                 self.dados.write('Tempo esgotado\n')
-                self.parar()
+                self.start_time = self.TEMPO_PARADA
                 prox_enviar = self.base
             else:
                 self.dados.write('Movendo janela\n')
@@ -105,7 +109,6 @@ class Servidor():
         self.s.close()
 
     def resposta(self, s):
-
         while True:
             pct, _ = s.recvfrom(1024)
             ack = int.from_bytes(pct[0:4], byteorder = 'little', signed = True)
@@ -116,7 +119,7 @@ class Servidor():
                 self.thread.acquire()
                 self.base = int(ack) + 1
                 self.dados.write('Base atualizada ' + str(self.base) + '\n')
-                self.parar()
+                self.start_time = self.TEMPO_PARADA
                 self.thread.release()
 
     def calcular_atraso(self, segmento):
@@ -140,19 +143,11 @@ class Servidor():
             return True
         return False
 
-    def iniciar(self):
-        if self._start_time == self.TEMPO_PARADA:
-            self._start_time = time.time()
+    def verifica_execucao(self):
+        return self.start_time != self.TEMPO_PARADA
 
-    def parar(self):
-        if self._start_time != self.TEMPO_PARADA:
-            self._start_time = self.TEMPO_PARADA
-
-    def running(self):
-        return self._start_time != self.TEMPO_PARADA
-
-    def timeout(self):
-        if not self.running():
+    def verifica_timeout(self):
+        if not self.verifica_execucao():
             return False
         else:
-            return time.time() - self._start_time >= self.TEMPO_LIMITE
+            return time.time() - self.start_time >= self.TEMPO_LIMITE

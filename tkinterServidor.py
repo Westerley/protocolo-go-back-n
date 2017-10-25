@@ -6,6 +6,7 @@ from functools import partial
 import matplotlib.animation as animation
 from tkinterGrafico import Grafico
 from servidor import Servidor
+import os
 
 class TkServidor(object):
 
@@ -100,14 +101,19 @@ class TkServidor(object):
             lb_arquivo['text'] = "Erro ao abrir arquivo"
 
     def obter_dados(self):
-        servidor = Servidor(self.lb_arquivo['text'], int(self.janela.get()), float(self.probabilidade.get()), float(self.tempo_limite.get()), float(self.rtt.get()), float(self.media.get()))
-        servidor.enviar()
+        if not self.lb_arquivo['text']:
+            mensagem.showinfo("Aviso", "Nenhum arquivo selecionado.")
+        elif float(self.probabilidade.get()) == 0 or float(self.tempo_limite.get()) == 0 or float(self.rtt.get()) == 0 or float(self.media.get()) == 0:
+            mensagem.showinfo("Aviso", "Os campos devem ser diferente de zero")
+        else:
+            servidor = Servidor(self.lb_arquivo['text'], int(self.janela.get()), float(self.probabilidade.get()), float(self.tempo_limite.get()), float(self.rtt.get()), float(self.media.get()))
+            servidor.enviar()
 
-        for linha in open('lista_servidor.txt', 'r'):
-            self.lista.insert(END, linha.strip())
-        self.lista.pack(side = LEFT, fill = 'both', expand = 1)
+            for linha in open('lista_servidor.txt', 'r'):
+                self.lista.insert(END, linha.strip())
+            self.lista.pack(side=LEFT, fill='both', expand=1)
 
-        mensagem.showinfo("Aviso", "Processo concluido")
+            mensagem.showinfo("Aviso", "Processo concluido")
 
 ''' Instancia '''
 instancia = Tk()
