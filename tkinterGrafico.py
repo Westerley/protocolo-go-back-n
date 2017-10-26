@@ -5,6 +5,8 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from matplotlib import style
+import pandas as pd
+import numpy as np
 style.use("ggplot")
 
 class Grafico(Tk):
@@ -27,18 +29,9 @@ class Grafico(Tk):
         canvas._tkcanvas.pack(side = TOP, fill = BOTH, expand=True)
 
     def popula_dados(self, i):
-        arquivo = open("grafico.txt", "r").read()
-        lista = arquivo.split('\n')
-        xLista = []
-        yLista = []
-        for linha in lista:
-            if len(linha) > 1:
-                x, y = linha.split(',')
-                xLista.append(int(x))
-                yLista.append(float(y))
-
+        df = pd.read_table('grafico.txt', delimiter=',', names=('Pacote', 'Tempo'))
         self.a.clear()
-        self.a.plot(xLista, yLista, color='black')
+        self.a.plot(np.array(df["Pacote"]), np.array(df["Tempo"]), color='black')
         self.a.set_title("Tempo de Transferência vs. Pacote", fontsize="12")
         self.a.set_xlabel('Pacote')
         self.a.set_ylabel('Tempo de Transferência (segundos)')

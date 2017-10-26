@@ -13,18 +13,22 @@ Isto é, um pacote é perdido com probabilidade p.
 
 <img src="imagens/imagem.png" width="100" height="100">
 
-## Requisitos
+## Módulos
 
 * Python >= 3.5
-* Tkinter
+* tkinter, matplotlib, socket, time, sys, os, random, math, _thread, numpy, pandas
 
 ## Execução
 
-* Executar o arquivo tkinterCliente.py e clicar no botão para iniciar o serviço.
-* Executar o arquivo tkinterServidor.py e configurar os parâmetros necessários para enviar o arquivo selecionado.
+* [Recomendável] Executar o arquivo tkinterCliente.py.
+* [Recomendável] Executar o arquivo tkinterServidor.py.
 
 OU
 
 * Executar o arquivo tkinterCliente e tkinterServidor na pasta dist
+
+## Ambiente
+
+* Ubuntu 16.04
 
 

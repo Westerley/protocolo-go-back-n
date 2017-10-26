@@ -6,7 +6,6 @@ from functools import partial
 import matplotlib.animation as animation
 from tkinterGrafico import Grafico
 from servidor import Servidor
-import os
 
 class TkServidor(object):
 

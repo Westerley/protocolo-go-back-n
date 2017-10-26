@@ -22,7 +22,7 @@ class Servidor():
         self.probabilidade = probabilidade
         self.lista_tempo = []
         self.nome_arquivo = nome_arquivo
-        self.start_time = self.TEMPO_PARADA
+        self.iniciar_tempo = self.TEMPO_PARADA
 
         self.base = 0
         self.thread = _thread.allocate_lock()
@@ -83,8 +83,7 @@ class Servidor():
 
             if not self.verifica_execucao():
                 self.dados.write('Iniciando temporizador\n')
-                if self.start_time == self.TEMPO_PARADA:
-                    self.start_time = time.time()
+                self.iniciar_tempo = time.time()
 
             while self.verifica_execucao() and not self.verifica_timeout():
                 self.thread.release()
@@ -94,11 +93,12 @@ class Servidor():
 
             if self.verifica_timeout():
                 self.dados.write('Tempo esgotado\n')
-                self.start_time = self.TEMPO_PARADA
+                self.iniciar_tempo = self.TEMPO_PARADA
                 prox_enviar = self.base
             else:
                 self.dados.write('Movendo janela\n')
                 tam_janela = min(self.TAM_JANELA, num_pacotes - self.base)
+
             self.thread.release()
 
         self.s.sendto(''.encode('ascii'), (self.HOST, self.PORTA))
@@ -119,7 +119,7 @@ class Servidor():
                 self.thread.acquire()
                 self.base = int(ack) + 1
                 self.dados.write('Base atualizada ' + str(self.base) + '\n')
-                self.start_time = self.TEMPO_PARADA
+                self.iniciar_tempo = self.TEMPO_PARADA
                 self.thread.release()
 
     def calcular_atraso(self, segmento):
@@ -144,10 +144,10 @@ class Servidor():
         return False
 
     def verifica_execucao(self):
-        return self.start_time != self.TEMPO_PARADA
+        return self.iniciar_tempo != self.TEMPO_PARADA
 
     def verifica_timeout(self):
         if not self.verifica_execucao():
             return False
         else:
-            return time.time() - self.start_time >= self.TEMPO_LIMITE
+            return time.time() - self.iniciar_tempo >= self.TEMPO_LIMITE
