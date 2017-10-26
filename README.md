@@ -20,15 +20,15 @@ Isto é, um pacote é perdido com probabilidade p.
 
 ## Execução
 
-* [Recomendável] Executar o arquivo tkinterCliente.py.
-* [Recomendável] Executar o arquivo tkinterServidor.py.
+* [Recomendável] Executar o arquivo tkinterCliente.py
+* [Recomendável] Executar o arquivo tkinterServidor.py
 
 OU
 
-* Executar o arquivo tkinterCliente e tkinterServidor na pasta dist
+* Criar o arquivo executável com pyInstaller. Ex.: pyinstaller tkinterCliente; pyinstaller tkinterServidor
 
 ## Ambiente
 
-* Ubuntu 16.04
+* Linux - Ubuntu 16.04
 
 
